@@ -20,6 +20,7 @@ const GetForms = async (formtype) => {
   const formData = new URLSearchParams();
   formData.append("token", "SWNCMPMSREMXAMCKALVAALI");
   formData.append("FormHeading", formtype);
+  formData.append("Type", "User");
 
   try {
     const response = await axios.post(

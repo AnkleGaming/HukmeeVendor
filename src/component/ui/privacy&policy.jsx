@@ -85,7 +85,9 @@ const PrivacyAndPolicy = () => {
         {/* Content */}
         {!loading && !error && terms && (
           <div className="space-y-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 border-l-4 border-blue-500 pl-4">
+            <h2
+              className={`text-2xl sm:text-3xl font-bold text-gray-800 border-l-4 border-${Colors.primaryMain} pl-4`}
+            >
               {terms.formHeading}
             </h2>
             <p className="text-gray-600 text-base sm:text-lg leading-relaxed whitespace-pre-line bg-gray-50 p-6 rounded-lg shadow-sm">
