@@ -37,6 +37,7 @@ const AcceptedScreen = () => {
   }, [showOtpModal, showCancelModal]);
 
   // Fetch orders
+  // Inside your AcceptedScreen component, replace the useEffect that sets orders
   useEffect(() => {
     const fetchOrders = async () => {
       if (!UserID) return;
@@ -45,8 +46,44 @@ const AcceptedScreen = () => {
       try {
         const data = await GetOrders("", UserID, "Done");
 
-        // Reverse the order here
-        setOrders((data || []).slice().reverse());
+        // Step 1: Group by OrderID
+        const groupedOrders = {};
+
+        (data || []).forEach((item) => {
+          const orderId = item.OrderID;
+
+          if (!groupedOrders[orderId]) {
+            groupedOrders[orderId] = {
+              OrderID: orderId,
+              UserID: item.UserID,
+              Address: item.Address,
+              SlotDatetime: item.SlotDatetime,
+              Slot: item.Slot,
+              Status: item.Status,
+              OTP: item.OTP || item.otp || item._doc?.OTP,
+              items: [], // This will hold all items
+              totalPrice: 0,
+              totalQuantity: 0,
+            };
+          }
+
+          // Add item details
+          groupedOrders[orderId].items.push({
+            ItemName: item.ItemName,
+            OrderType: item.OrderType,
+            Price: parseFloat(item.Price) || 0,
+            Quantity: parseInt(item.Quantity) || 0,
+          });
+
+          // Accumulate totals
+          groupedOrders[orderId].totalPrice += parseFloat(item.Price) || 0;
+          groupedOrders[orderId].totalQuantity += parseInt(item.Quantity) || 0;
+        });
+
+        // Convert to array and reverse (newest first)
+        const groupedArray = Object.values(groupedOrders).reverse();
+
+        setOrders(groupedArray);
       } catch (error) {
         console.error("Error fetching orders:", error);
         setOrders([]);
@@ -84,9 +121,8 @@ const AcceptedScreen = () => {
 
   // Start Service
   const handleStartService = (order) => {
-    const otpValue = order?.OTP || order?.otp || order?._doc?.OTP || null;
-    setOtp(otpValue);
-    setSelectedOrder(order);
+    setOtp(order.OTP);
+    setSelectedOrder(order); // This now has .items, .totalPrice etc.
     setIsProcessing(true);
 
     setTimeout(() => {
@@ -185,7 +221,6 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
     visible: { opacity: 1, y: 0 },
   };
 
-  // Format date beautifully
   const formatSlotDate = () => {
     if (!order.SlotDatetime) return "Not scheduled";
     try {
@@ -208,7 +243,7 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
       initial="hidden"
       animate="visible"
       exit="hidden"
-      transition={{ delay: index * 0.1 }} // ← FIXED THIS LINE
+      transition={{ delay: index * 0.1 }}
       className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
     >
       <div className="p-5">
@@ -236,54 +271,72 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
           </span>
         </div>
 
-        {/* Details */}
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Service</span>
-            <span className="font-medium text-right max-w-[60%]">
-              {order.ItemName}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Type</span>
-            <span className="font-medium capitalize">{order.OrderType}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Price</span>
-            <span className="font-semibold text-green-600">₹{order.Price}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-600">Qty</span>
-            <span className="font-medium">{order.Quantity}</span>
-          </div>
+        {/* Items List */}
+        <div className="space-y-3 mb-4">
+          <h4 className="font-semibold text-sm text-gray-700 flex items-center gap-2">
+            <Package size={16} />
+            Services ({order.items.length})
+          </h4>
 
-          {/* Address */}
-          <div className="pt-3 border-t border-gray-100">
-            <div className="flex items-start gap-2">
-              <span className="text-gray-600 text-xs">Address</span>
-              <p className="text-xs font-medium text-gray-800 text-right flex-1 leading-relaxed">
-                {order.Address || "Not provided"}
-              </p>
+          {order.items.map((item, idx) => (
+            <div
+              key={idx}
+              className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <p className="font-medium text-gray-800">{item.ItemName}</p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {item.OrderType}
+                  </p>
+                </div>
+                <div className="text-right ml-4">
+                  <p className="font-semibold text-green-600">₹{item.Price}</p>
+                  <p className="text-xs text-gray-500">Qty: {item.Quantity}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
 
-          {/* Scheduled Slot */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <span className="text-gray-600 text-xs flex items-center gap-1">
-              <Calendar size={14} className="text-orange-500" />
-              Scheduled
-            </span>
-            <div className="text-right">
-              {order.Slot && (
-                <p className="text-xs text-gray-500 mt-0.5">{order.Slot}</p>
-              )}
+          {/* Total */}
+          <div className="border-t-2 border-dashed pt-3 mt-4">
+            <div className="flex justify-between font-bold text-lg">
+              <span>Total Amount</span>
+              <span className="text-green-600">₹{order.totalPrice}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Total Items</span>
+              <span>{order.totalQuantity} units</span>
             </div>
           </div>
         </div>
 
-        {/* Buttons - Only show when status is "Done" (i.e. accepted) */}
+        {/* Address */}
+        <div className="pt-3 border-t border-gray-200 mb-4">
+          <div className="flex items-start gap-2 text-sm">
+            <span className="text-gray-600">Address</span>
+            <p className="text-gray-800 flex-1 text-right leading-relaxed">
+              {order.Address || "Not provided"}
+            </p>
+          </div>
+        </div>
+
+        {/* Scheduled Slot */}
+        <div className="flex items-center justify-between pt-3 border-t border-gray-200 mb-6">
+          <span className="text-gray-600 text-xs flex items-center gap-1">
+            <Calendar size={14} className="text-orange-500" />
+            Scheduled
+          </span>
+          <div className="text-right">
+            {order.Slot && (
+              <p className="text-xs text-gray-500 mt-0.5">{order.Slot}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
         {order.Status === "Done" && (
-          <div className="flex gap-3 mt-6">
+          <div className="flex gap-3">
             <button
               onClick={() => onStart(order)}
               className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold text-sm hover:shadow-lg transition-all flex items-center justify-center gap-2"

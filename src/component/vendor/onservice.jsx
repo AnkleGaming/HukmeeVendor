@@ -71,7 +71,7 @@ const OnService = () => {
               BeforVideo: order.BeforVideo || "",
               AfterVideo: order.AfterVideo || "",
               PaymentMethod: order.PaymentMethod || "",
-              OTP: order.OTP || order.otp || "",
+              OTP: order.OTP || "",
             };
           }
 

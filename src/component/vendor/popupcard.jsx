@@ -2,10 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import colors from "../core/constant";
 import DeclineLeads from "../../backend/order/declineleads";
-import ShowLeads from "../../backend/order/showleads";
 import UpdateOrders from "../../backend/order/updateorderstatus";
 import AcceptLeads from "../../backend/order/acceptleads";
-import GetOrders from "../../backend/order/getorders";
+import GetAlertOrder from "../../backend/order/showalertorder";
 
 const useWindowSize = () => {
   const [size, setSize] = useState({ width: window.innerWidth });
@@ -17,46 +16,41 @@ const useWindowSize = () => {
   return size;
 };
 
-const Popupcard = ({ onClose }) => {
+const Popupcard = ({ data, onClose }) => {
   const { width } = useWindowSize();
   const isMobile = width < 640;
 
   const [timer, setTimer] = useState(60);
-  const [pendingLead, setPendingLead] = useState(null); // ← Always object or null
-  const [orderDetails, setOrderDetails] = useState([]); // ← Full order items
+  const [orderDetails, setOrderDetails] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const UserID = localStorage.getItem("userPhone");
   const intervalRef = useRef(null);
 
-  // Step 1: Fetch pending lead
-  useEffect(() => {
-    if (!UserID) return;
+  const pendingLead = data; // We now receive data from parent
 
-    const fetchLead = async () => {
+  // Fetch full order details
+  useEffect(() => {
+    if (!pendingLead?.OrderID) return;
+
+    const fetchOrderDetails = async () => {
+      setLoading(true);
       try {
-        const leads = await ShowLeads(UserID, "Pending");
-        if (leads && leads.length > 0) {
-          setPendingLead(leads[0]); // Take first pending lead
-          setTimer(60); // Reset timer
-        } else {
-          setPendingLead(null);
-          onClose?.(); // No lead → close popup
-        }
+        const details = await GetAlertOrder(pendingLead.OrderID);
+        setOrderDetails(details || []);
       } catch (err) {
-        console.error("Failed to fetch leads:", err);
-        onClose?.();
+        console.error("Failed to load order details:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchLead();
-  }, [UserID, onClose]);
+    fetchOrderDetails();
+  }, [pendingLead?.OrderID]);
 
   // Timer + Auto Decline
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-
-    if (!pendingLead) return;
 
     intervalRef.current = setInterval(() => {
       setTimer((prev) => {
@@ -70,30 +64,28 @@ const Popupcard = ({ onClose }) => {
     }, 1000);
 
     return () => clearInterval(intervalRef.current);
-  }, [pendingLead]);
+  }, []);
+
+  const closePopup = () => {
+    clearInterval(intervalRef.current);
+    onClose(); // This tells parent to hide popup
+  };
 
   const autoDecline = async () => {
     if (!pendingLead?.OrderID) return;
-
     setLoading(true);
     try {
-      const res = await DeclineLeads(pendingLead.OrderID, UserID);
-      if (res?.message === "Lead Declined Successfully") {
-        window.location.reload();
-      } else {
-        onClose?.();
-      }
+      await DeclineLeads(pendingLead.OrderID, UserID);
     } catch (err) {
-      onClose?.();
+      console.error("Auto decline failed:", err);
     } finally {
-      setLoading(false);
+      closePopup();
     }
   };
 
   const handleAccept = async () => {
     if (!pendingLead) return;
     clearInterval(intervalRef.current);
-    setTimer(0);
     setLoading(true);
 
     try {
@@ -101,40 +93,29 @@ const Popupcard = ({ onClose }) => {
         OrderID: pendingLead.OrderID,
         Status: "Done",
         VendorPhone: UserID,
-        // other fields empty as needed
       });
-
       await AcceptLeads(pendingLead.OrderID, UserID);
-      window.location.reload();
     } catch (err) {
       alert("Accept failed");
-      onClose?.();
     } finally {
-      setLoading(false);
+      closePopup(); // Only this — no reload!
     }
   };
 
   const handleDecline = async () => {
     if (!pendingLead) return;
     clearInterval(intervalRef.current);
-    setTimer(0);
     setLoading(true);
 
     try {
-      const res = await DeclineLeads(pendingLead.OrderID, UserID);
-      if (res?.message === "Lead Declined Successfully") {
-        alert("Declined");
-        window.location.reload();
-      }
+      await DeclineLeads(pendingLead.OrderID, UserID);
     } catch (err) {
       alert("Decline failed");
     } finally {
-      setLoading(false);
-      onClose?.();
+      closePopup(); // Only this — no reload!
     }
   };
 
-  // Don't render if no lead
   if (!pendingLead) return null;
 
   const item = orderDetails[0] || {};
@@ -159,15 +140,11 @@ const Popupcard = ({ onClose }) => {
         </p>
       </div>
 
-      {/* Real Order Details */}
       <div className="mb-6 bg-gray-50 rounded-xl p-5 space-y-3 text-sm">
         <h3 className="font-semibold text-gray-800">Order Details</h3>
         <div className="space-y-2">
           <p>
-            <strong>Customer:</strong> {pendingLead.CustomerName || "N/A"}
-          </p>
-          <p>
-            <strong>Service:</strong> {item.ServiceName || "Loading..."}
+            <strong>Service:</strong> {item.ItemName || "Loading..."}
           </p>
           <p>
             <strong>Price:</strong> ₹{item.Price || "N/A"}
@@ -178,6 +155,11 @@ const Popupcard = ({ onClose }) => {
           {item.Slot && (
             <p>
               <strong>Slot:</strong> {item.Slot}
+            </p>
+          )}
+          {item.Quantity && item.Quantity !== "1" && (
+            <p>
+              <strong>Quantity:</strong> {item.Quantity}
             </p>
           )}
         </div>
@@ -200,7 +182,7 @@ const Popupcard = ({ onClose }) => {
           disabled={loading}
           className={`flex-1 py-3 rounded-lg font-bold border ${colors.borderGray} text-gray-700 hover:bg-gray-100 transition-all`}
         >
-          Decline
+          {loading ? "Declining..." : "Decline"}
         </button>
       </div>
     </>
@@ -212,8 +194,10 @@ const Popupcard = ({ onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
-        onClick={(e) => e.target === e.currentTarget && !loading && onClose?.()}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={(e) =>
+          e.target === e.currentTarget && !loading && closePopup()
+        }
       >
         <motion.div
           variants={
@@ -227,7 +211,7 @@ const Popupcard = ({ onClose }) => {
           initial="hidden"
           animate="visible"
           exit="hidden"
-          transition={{ duration: 0.3 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className={
             isMobile
               ? "fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl p-6 max-w-md mx-auto"
@@ -235,7 +219,7 @@ const Popupcard = ({ onClose }) => {
           }
         >
           {isMobile && (
-            <div className="w-16 h-1.5 bg-gray-300 rounded-full mx-auto mb-5"></div>
+            <div className="w-16 h-1.5 bg-gray-300 rounded-full mx-auto mb-5" />
           )}
           {Content}
         </motion.div>

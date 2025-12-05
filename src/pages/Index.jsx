@@ -76,28 +76,49 @@ const Index = () => {
   };
 
   // Fetch vendor leads every 5 seconds
+  // Global Set to remember which leads have already been shown in this session
+  // Move this OUTSIDE the component (top of file, after imports)
+  const shownLeadIds = new Set();
+  let isPopupCurrentlyOpen = false; // This prevents any reset while popup is open
+
   useEffect(() => {
-    if (!isLoggedIn || !mobile) return;
+    if (!isLoggedIn || !mobile || isPopupCurrentlyOpen) return;
 
     const fetchLeads = async () => {
+      // Don't do anything if popup is already open
+      if (isPopupCurrentlyOpen) return;
+
       try {
         const leads = await ShowLeads(mobile, "Pending");
-        if (Array.isArray(leads) && leads.length > 0) {
-          console.log("🟢 New leads:", leads);
-          setPopupData(leads[0]);
+
+        const unseenLeads = Array.isArray(leads)
+          ? leads.filter(
+              (lead) => lead?.OrderID && !shownLeadIds.has(lead.OrderID)
+            )
+          : [];
+
+        if (unseenLeads.length > 0) {
+          const nextLead = unseenLeads[0];
+          shownLeadIds.add(nextLead.OrderID);
+
+          console.log("New lead shown:", nextLead.OrderID);
+
+          // Mark popup as open
+          isPopupCurrentlyOpen = true;
+
+          setPopupData(nextLead);
           setShowPopupCard(true);
-        } else {
-          console.log("🟡 No new leads");
         }
       } catch (err) {
-        console.error("❌ Error fetching leads:", err);
+        console.error("Error fetching leads:", err);
       }
     };
 
     fetchLeads();
     const interval = setInterval(fetchLeads, 5000);
+
     return () => clearInterval(interval);
-  }, [isLoggedIn, mobile]);
+  }, [isLoggedIn, mobile]); // No dependency on showPopupCard!
 
   // Update vendor location every 5 seconds
   useEffect(() => {
@@ -179,6 +200,11 @@ const Index = () => {
   const handlePopupClose = () => {
     setShowPopupCard(false);
     setPopupData(null);
+
+    // Allow new popups again after current one is fully closed
+    setTimeout(() => {
+      isPopupCurrentlyOpen = false;
+    }, 500); // Small delay to prevent race condition
   };
 
   const handleCancel = () => {
