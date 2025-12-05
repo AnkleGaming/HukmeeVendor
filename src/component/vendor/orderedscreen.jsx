@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import GetOrders from "../../backend/order/getorders";
-import COLORS from "../core/constant";
-import UpdateOrderstatus from "../../backend/order/updateorderstatus";
-import StartServiceVerify from "../ui/startserviceverify";
 import {
+  Calendar,
   Package,
   Clock,
   CheckCircle,
@@ -12,6 +9,10 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
+import GetOrders from "../../backend/order/getorders";
+import COLORS from "../core/constant";
+import UpdateOrderstatus from "../../backend/order/updateorderstatus";
+import StartServiceVerify from "../ui/startserviceverify";
 
 const AcceptedScreen = () => {
   const [orders, setOrders] = useState([]);
@@ -42,7 +43,7 @@ const AcceptedScreen = () => {
       setIsLoading(true);
 
       try {
-        const data = await GetOrders(UserID, "Done");
+        const data = await GetOrders("", UserID, "Done");
 
         // Reverse the order here
         setOrders((data || []).slice().reverse());
@@ -184,16 +185,34 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
     visible: { opacity: 1, y: 0 },
   };
 
+  // Format date beautifully
+  const formatSlotDate = () => {
+    if (!order.SlotDatetime) return "Not scheduled";
+    try {
+      const date = new Date(order.SlotDatetime);
+      return date.toLocaleDateString("en-IN", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return order.Slot || "Scheduled";
+    }
+  };
+
   return (
     <motion.div
       variants={cardVariants}
       initial="hidden"
       animate="visible"
       exit="hidden"
-      transition={{ delay: index * 0.1 }}
+      transition={{ delay: index * 0.1 }} // ← FIXED THIS LINE
       className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
     >
       <div className="p-5">
+        {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 className="font-bold text-lg text-gray-800">
@@ -217,10 +236,13 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
           </span>
         </div>
 
-        <div className="space-y-2 text-sm">
+        {/* Details */}
+        <div className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-600">Service</span>
-            <span className="font-medium">{order.ItemName}</span>
+            <span className="font-medium text-right max-w-[60%]">
+              {order.ItemName}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Type</span>
@@ -234,23 +256,47 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
             <span className="text-gray-600">Qty</span>
             <span className="font-medium">{order.Quantity}</span>
           </div>
+
+          {/* Address */}
+          <div className="pt-3 border-t border-gray-100">
+            <div className="flex items-start gap-2">
+              <span className="text-gray-600 text-xs">Address</span>
+              <p className="text-xs font-medium text-gray-800 text-right flex-1 leading-relaxed">
+                {order.Address || "Not provided"}
+              </p>
+            </div>
+          </div>
+
+          {/* Scheduled Slot */}
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+            <span className="text-gray-600 text-xs flex items-center gap-1">
+              <Calendar size={14} className="text-orange-500" />
+              Scheduled
+            </span>
+            <div className="text-right">
+              {order.Slot && (
+                <p className="text-xs text-gray-500 mt-0.5">{order.Slot}</p>
+              )}
+            </div>
+          </div>
         </div>
 
+        {/* Buttons - Only show when status is "Done" (i.e. accepted) */}
         {order.Status === "Done" && (
-          <div className="flex gap-3 mt-5">
+          <div className="flex gap-3 mt-6">
             <button
               onClick={() => onStart(order)}
-              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2.5 rounded-xl font-medium text-sm hover:shadow-md transition flex items-center justify-center gap-2"
+              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold text-sm hover:shadow-lg transition-all flex items-center justify-center gap-2"
             >
-              <Package size={16} />
+              <Package size={18} />
               Start Service
             </button>
             <button
               onClick={() => onCancel(order.OrderID)}
-              className="flex-1 bg-red-500 text-white py-2.5 rounded-xl font-medium text-sm hover:bg-red-600 transition flex items-center justify-center gap-2"
+              className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-red-700 transition-all flex items-center justify-center gap-2"
             >
-              <XCircle size={16} />
-              Cancel
+              <XCircle size={18} />
+              Cancel Order
             </button>
           </div>
         )}

@@ -53,7 +53,7 @@ const OnService = () => {
       if (!UserID) return;
       setIsLoading(true);
       try {
-        const data = await GetOrders(UserID, "Onservice");
+        const data = await GetOrders("", UserID, "Onservice");
         const rawOrders = (data || []).reverse();
 
         const grouped = {};
