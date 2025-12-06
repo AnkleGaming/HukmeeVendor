@@ -22,7 +22,7 @@ const CanceledScreen = () => {
       if (!UserID) return;
       setIsLoading(true);
       try {
-        const data = await GetOrders(UserID, "Cancelled");
+        const data = await GetOrders("", UserID, "Cancelled");
         setOrders(data || []);
       } catch (error) {
         console.error("Error fetching canceled orders:", error);

@@ -53,14 +53,19 @@ const Index = () => {
     switch (selectedTab) {
       case "accepted":
         return <AcceptedScreen />;
+
       case "onservice":
         return <OnService />;
+
       case "declined":
         return <DeclinedScreen />;
+
       case "completed":
         return <CompletedScreen />;
-      case "canceled":
+
+      case "Cancelled": // UPDATED ✔️
         return <CanceledScreen />;
+
       default:
         return null;
     }
@@ -75,9 +80,6 @@ const Index = () => {
     }, 500);
   };
 
-  // Fetch vendor leads every 5 seconds
-  // Global Set to remember which leads have already been shown in this session
-  // Move this OUTSIDE the component (top of file, after imports)
   const shownLeadIds = new Set();
   let isPopupCurrentlyOpen = false; // This prevents any reset while popup is open
 

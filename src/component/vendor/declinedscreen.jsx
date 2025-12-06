@@ -25,7 +25,7 @@ const DeclinedScreen = () => {
       if (!UserID) return;
       setIsLoading(true);
       try {
-        const data = await GetOrders(UserID, "Declined"); // or "Declined" if backend uses that
+        const data = await GetOrders("", UserID, "Declined"); // or "Declined" if backend uses that
         setOrders(data || []);
       } catch (error) {
         console.error("Error fetching declined orders:", error);

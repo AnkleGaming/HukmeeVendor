@@ -102,6 +102,8 @@ const AcceptedScreen = () => {
     try {
       const response = await UpdateOrderstatus({
         OrderID: orderId,
+        Price: "",
+        Quantity: "",
         Status: "Cancelled",
         VendorPhone: UserID,
         BeforVideo: "",
@@ -157,8 +159,8 @@ const AcceptedScreen = () => {
     }
   };
 
-  const openCancelModal = (orderId) => {
-    setCancelOrderId(orderId);
+  const openCancelModal = (order) => {
+    setCancelOrderId(order.OrderID);
     setShowCancelModal(true);
   };
 
@@ -368,7 +370,7 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
               Start Service
             </button>
             <button
-              onClick={() => onCancel(order.OrderID)}
+              onClick={() => onCancel(order)}
               className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-red-700 transition-all flex items-center justify-center gap-2"
             >
               <XCircle size={18} />

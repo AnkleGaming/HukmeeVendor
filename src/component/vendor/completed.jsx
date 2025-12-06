@@ -30,7 +30,7 @@ const CompletedScreen = () => {
       if (!UserID) return;
       setIsLoading(true);
       try {
-        const data = await GetOrders(UserID, "Completed");
+        const data = await GetOrders("", UserID, "Completed");
         setOrders(data || []);
       } catch (error) {
         console.error("Error fetching completed orders:", error);
