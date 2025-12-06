@@ -64,7 +64,8 @@ const LoginCard = ({ onClose, onSubmit }) => {
     setLoading(true);
 
     try {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      // const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otp = "123456";
       localStorage.setItem("userPhone", phoneNumber);
       localStorage.setItem("userOTP", otp);
 
