@@ -110,7 +110,7 @@ const CompletedOrderCard = ({ order, index }) => {
         {/* Header: Order ID + Status */}
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+            <h3 className="font-bold text-l text-gray-800 flex items-center gap-2">
               <Package size={18} />#{order.OrderID}
             </h3>
             <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
@@ -118,7 +118,7 @@ const CompletedOrderCard = ({ order, index }) => {
               {order.UserID}
             </p>
           </div>
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1">
+          <span className="px-3 py-1 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1">
             <CheckCircle size={14} />
             Completed
           </span>
@@ -169,7 +169,7 @@ const CompletedOrderCard = ({ order, index }) => {
         <div className="mt-4 flex justify-center">
           <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5">
             <CheckCircle size={16} />
-            Service Delivered
+            Completed
           </div>
         </div>
       </div>
