@@ -44,7 +44,7 @@ const PersonalDetails = () => {
   };
 
   const handleSave = async () => {
-    const requiredFields = ["Fullname", "PhoneNumber"];
+    const requiredFields = ["fullname", "phoneNumber"];
     const emptyFields = requiredFields.filter(
       (key) => !editedDetails[key] || editedDetails[key].trim() === ""
     );
@@ -56,11 +56,11 @@ const PersonalDetails = () => {
 
     try {
       const res = await UpdateVendor(
-        editedDetails.Fullname, // fullname
-        editedDetails.Email, // email
-        editedDetails.PhoneNumber, // phone
-        editedDetails.DOB, // dob
-        editedDetails.Address // address
+        editedDetails.fullname, // Correct key
+        editedDetails.email, // Correct key
+        editedDetails.phoneNumber, // Correct key
+        editedDetails.dob, // Correct key
+        editedDetails.Address // Correct key
       );
 
       if (res) {
@@ -130,17 +130,28 @@ const PersonalDetails = () => {
                 <label className="text-sm font-medium text-gray-600 uppercase mb-2">
                   {item.label}
                 </label>
-                <input
-                  type="text"
-                  value={editedDetails[item.key] || ""}
-                  onChange={(e) => handleInputChange(item.key, e.target.value)}
-                  disabled={!item.editable} // <-- disable if not editable
-                  className={`w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:outline-none ${
-                    !item.editable
-                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-                      : "focus:ring-2 focus:ring-orange-500 bg-white shadow-sm"
-                  }`}
-                />
+                {item.key === "dob" ? (
+                  <input
+                    type="date"
+                    value={editedDetails.dob || ""}
+                    onChange={(e) => handleInputChange("dob", e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:ring-2 focus:ring-orange-500 bg-white shadow-sm"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={editedDetails[item.key] || ""}
+                    onChange={(e) =>
+                      handleInputChange(item.key, e.target.value)
+                    }
+                    disabled={!item.editable}
+                    className={`w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:outline-none ${
+                      !item.editable
+                        ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                        : "focus:ring-2 focus:ring-orange-500 bg-white shadow-sm"
+                    }`}
+                  />
+                )}
               </div>
             ))}
           </div>

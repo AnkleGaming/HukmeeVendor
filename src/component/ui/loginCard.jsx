@@ -150,8 +150,6 @@ const LoginCard = ({ onClose, onSubmit }) => {
                 className={`border ${colors.borderGray} rounded-lg px-3 py-2 text-sm bg-gray-50 text-gray-800 focus:ring-2 focus:ring-[#FA7D09]`}
               >
                 <option value="+91">+91</option>
-                <option value="+1">+1</option>
-                <option value="+44">+44</option>
               </select>
               <input
                 type="tel"
@@ -245,8 +243,6 @@ const LoginCard = ({ onClose, onSubmit }) => {
                 className={`border ${colors.borderGray} rounded-l-lg px-3 py-2 text-sm bg-gray-50 text-gray-800 focus:ring-2 focus:ring-[#FA7D09]`}
               >
                 <option value="+91">+91</option>
-                <option value="+1">+1</option>
-                <option value="+44">+44</option>
               </select>
               <input
                 type="tel"
@@ -272,7 +268,7 @@ const LoginCard = ({ onClose, onSubmit }) => {
             >
               {loading ? "Processing..." : "Continue"}
             </button>
-                
+
             {/* T&C */}
             <p className="mt-5 text-xs text-center text-gray-600">
               By continuing, you agree to our{" "}

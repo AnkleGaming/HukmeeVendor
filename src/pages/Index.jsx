@@ -217,6 +217,19 @@ const Index = () => {
     setShowCancelModal(true);
   };
 
+  useEffect(() => {
+    const openLoginModal = () => {
+      setShowLoginModal(true);
+      setShowOtpModal(false);
+    };
+
+    window.addEventListener("open-login-modal", openLoginModal);
+
+    return () => {
+      window.removeEventListener("open-login-modal", openLoginModal);
+    };
+  }, []);
+
   // Modal variants
   const modalVariants = {
     hidden: { opacity: 0, scale: 0.95 },
