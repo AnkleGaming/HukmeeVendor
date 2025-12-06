@@ -306,7 +306,7 @@ const GroupedOrderCard = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-lg p-5 border"
+      className="bg-white rounded-2xl shadow-lg p-2 border"
     >
       <div className="flex justify-between items-start mb-3">
         <h3 className="font-bold text-lg">#{order.OrderID}</h3>
@@ -315,7 +315,9 @@ const GroupedOrderCard = ({
         </span>
       </div>
 
-      <p className="text-sm text-gray-600 mb-3">Customer: {order.UserID}</p>
+      <p className="text-sm text-gray-600 mb-3">
+        Customer Phone Number: {order.UserID}
+      </p>
 
       {/* List of Items */}
       <div className="bg-gray-50 rounded-lg p-3 mb-4">
@@ -418,13 +420,13 @@ const GroupedOrderCard = ({
             <div className="flex flex-row justify-between">
               <button
                 onClick={() => onUpdateItem(order.OrderID)}
-                className="bg-gradient-to-r from-orange-500 to-gray-600 text-white p-2.5 rounded-xl font-medium text-sm hover:shadow-md transition flex items-center justify-center gap-2 hover:cursor-pointer"
+                className="bg-gradient-to-r from-orange-500 to-gray-600 text-white p-2.5 rounded-xl font-medium text-[10px] hover:shadow-md transition flex items-center justify-center gap-2 hover:cursor-pointer"
               >
                 Update items
               </button>
               <button
                 onClick={() => onPayment(order.OrderID, order.totalPrice)}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-2.5 rounded-xl font-medium text-sm hover:shadow-md transition flex items-center justify-center gap-2 hover:cursor-pointer"
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-2.5 rounded-xl font-medium text-[10px] hover:shadow-md transition flex items-center justify-center gap-2 hover:cursor-pointer"
               >
                 <IndianRupee size={16} />
                 Confirm Payment
