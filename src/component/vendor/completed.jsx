@@ -118,10 +118,10 @@ const CompletedOrderCard = ({ order, index }) => {
               {order.UserID}
             </p>
           </div>
-          <span className="px-3 py-1 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1">
+          {/* <span className="px-3 py-1 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1">
             <CheckCircle size={14} />
             Completed
-          </span>
+          </span> */}
         </div>
 
         {/* Order Details */}

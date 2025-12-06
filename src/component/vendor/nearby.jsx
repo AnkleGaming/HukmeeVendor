@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "../ui/card";
 import { FiSearch, FiMapPin, FiSend } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 import Colors from "../core/constant";
 import NearBy from "../../backend/order/nearby";
 import InsertHubRequest from "../../backend/order/inserthubrequest";
@@ -10,7 +11,6 @@ const VendorCard = ({ name, location, distance, onRequest, onLocation }) => {
     <div className="group transition-all duration-300 hover:scale-[1.02]">
       <Card className="w-full rounded-2xl overflow-hidden shadow-md hover:shadow-2xl bg-white border border-gray-100 transition-all duration-300">
         <CardContent className="p-5 space-y-4">
-          {/* Hub Name & Location */}
           <div>
             <h4 className="font-bold text-lg text-gray-900 truncate">{name}</h4>
             <p className="text-sm text-gray-600 truncate mt-1">{location}</p>
@@ -21,14 +21,13 @@ const VendorCard = ({ name, location, distance, onRequest, onLocation }) => {
             )}
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3">
             <button
               onClick={onRequest}
               className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold text-sm py-3 rounded-xl hover:shadow-lg transition-all"
             >
               <FiSend size={16} />
-              Request Stock
+              Request Sent
             </button>
             <button
               onClick={onLocation}
@@ -47,12 +46,13 @@ const VendorCard = ({ name, location, distance, onRequest, onLocation }) => {
 const NearbyScreen = ({ onVendorSelect }) => {
   const [vendorList, setVendorList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Only show skeleton on first load
   const [searchTerm, setSearchTerm] = useState("");
-  const [inputValue, setInputValue] = useState(""); // For live typing
+  const [inputValue, setInputValue] = useState("");
   const [lat, setLat] = useState(null);
   const [lon, setLon] = useState(null);
 
-  // Get user location once
+  // Get user location
   useEffect(() => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
@@ -60,9 +60,8 @@ const NearbyScreen = ({ onVendorSelect }) => {
           setLat(position.coords.latitude);
           setLon(position.coords.longitude);
         },
-        (error) => {
-          console.warn("Location denied, using default:", error);
-          setLat(28.6139); // Delhi
+        () => {
+          setLat(28.6139); // Default: Delhi
           setLon(77.209);
         }
       );
@@ -72,14 +71,15 @@ const NearbyScreen = ({ onVendorSelect }) => {
     }
   }, []);
 
-  // Fetch vendors when search term changes
+  // Fetch vendors smoothly
   const fetchVendors = useCallback(async () => {
     if (!searchTerm.trim() || lat === null || lon === null) {
       setVendorList([]);
       return;
     }
 
-    setLoading(true);
+    if (isInitialLoad) setLoading(true);
+
     try {
       const data = await NearBy({
         ProductName: searchTerm.trim(),
@@ -87,11 +87,11 @@ const NearbyScreen = ({ onVendorSelect }) => {
         lon,
       });
 
-      // Prevent unnecessary re-renders
+      // Deep compare to prevent unnecessary re-renders
       setVendorList((prev) => {
-        if (JSON.stringify(prev) === JSON.stringify(data || [])) {
-          return prev;
-        }
+        const prevIds = prev.map((v) => `${v.LoginID}-${v.DistanceKm}`);
+        const newIds = (data || []).map((v) => `${v.LoginID}-${v.DistanceKm}`);
+        if (JSON.stringify(prevIds) === JSON.stringify(newIds)) return prev;
         return data || [];
       });
     } catch (error) {
@@ -99,66 +99,57 @@ const NearbyScreen = ({ onVendorSelect }) => {
       setVendorList([]);
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
     }
-  }, [searchTerm, lat, lon]);
+  }, [searchTerm, lat, lon, isInitialLoad]);
 
-  // Initial fetch + auto-refresh every 8 seconds when searching
+  // Auto-refresh every 8 seconds when searching
   useEffect(() => {
-    fetchVendors(); // First load
+    fetchVendors();
 
     if (!searchTerm.trim()) return;
 
-    const interval = setInterval(fetchVendors, 8000); // Refresh every 8s
+    const interval = setInterval(fetchVendors, 8000);
     return () => clearInterval(interval);
   }, [fetchVendors]);
 
-  // Handle search submit
   const handleSearch = () => {
     setSearchTerm(inputValue.trim());
+    setIsInitialLoad(true); // Show skeleton again when user searches new term
   };
 
-  // Handle vendor request
   const handleVendorRequest = async (vendor) => {
     try {
       const VendorPhone = localStorage.getItem("userPhone") || "9999999999";
-
-      const response = await InsertHubRequest({
+      await InsertHubRequest({
         HubLoginID: vendor.LoginID,
         VendorPhone,
         itemID: vendor.InventoryID,
         itemName: vendor.ProductName,
         itemQTY: vendor.Quantity,
       });
-
-      if (response) {
-        alert(`Request sent successfully to ${vendor.hubName}!`);
-      }
+      alert(`Request sent to ${vendor.hubName}!`);
     } catch (err) {
-      console.error("Request failed:", err);
-      alert("Failed to send request. Please try again.");
+      console.error(err);
+      alert("Failed to send request.");
     }
   };
 
-  // Open location in maps
   const handleOpenMap = (vendor) => {
-    let latitude =
-      vendor.lat || vendor.Lat || vendor.latitude || vendor.Latitude;
-    let longitude =
+    const lat = vendor.lat || vendor.Lat || vendor.latitude || vendor.Latitude;
+    const lng =
       vendor.lon ||
       vendor.long ||
       vendor.longitude ||
       vendor.Longitude ||
       vendor.lOG;
 
-    if (latitude && longitude) {
-      window.open(
-        `https://www.google.com/maps?q=${latitude},${longitude}`,
-        "_blank"
-      );
+    if (lat && lng) {
+      window.open(`https://www.google.com/maps?q=${lat},${lng}`, "_blank");
     } else if (vendor.LocationLink) {
       window.open(vendor.LocationLink, "_blank");
     } else {
-      alert("Location not available for this hub.");
+      alert("Location not available");
     }
   };
 
@@ -166,15 +157,15 @@ const NearbyScreen = ({ onVendorSelect }) => {
     <div className="min-h-screen bg-gray-50 px-4 py-8">
       <div className="max-w-7xl mx-auto">
         {/* Search Bar */}
-        <div className="max-w-2xl mx-auto mt-8 mb-8">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <div className="flex items-center border-2 border-gray-300 rounded-2xl px-4 py-3 bg-white shadow-md focus-within:border-orange-500 focus-within:shadow-lg transition-all">
-                <FiSearch className="text-gray-500 mr-3" size={22} />
+        <div className="max-w-2xl mx-auto mb-10">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="flex items-center border-2 border-gray-300 rounded-2xl px-5 py-4 bg-white shadow-md focus-within:border-orange-500 focus-within:shadow-xl transition-all">
+                <FiSearch className="text-gray-500 mr-3" size={24} />
                 <input
                   type="text"
                   placeholder="Search products or shops nearby..."
-                  className="flex-1 outline-none text-gray-800 font-medium placeholder-gray-400"
+                  className="flex-1 outline-none text-gray-800 font-medium text-base placeholder-gray-400"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === "Enter" && handleSearch()}
@@ -184,23 +175,22 @@ const NearbyScreen = ({ onVendorSelect }) => {
             <button
               onClick={handleSearch}
               disabled={!inputValue.trim()}
-              className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold rounded-2xl hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="px-10 py-4 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold text-lg rounded-2xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               Search
             </button>
           </div>
         </div>
 
-        {/* Title */}
         <h2
-          className="text-3xl font-bold text-center mb-8"
+          className="text-3xl font-bold text-center mb-10"
           style={{ color: Colors.primaryMain }}
         >
-          Nearby Vendor Hubs
+          Nearby Hubs
         </h2>
 
-        {/* Loading State */}
-        {loading && (
+        {/* First Load Skeleton */}
+        {loading && isInitialLoad && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <div
@@ -208,42 +198,70 @@ const NearbyScreen = ({ onVendorSelect }) => {
                 className="bg-white rounded-2xl h-64 animate-pulse shadow-lg"
               >
                 <div className="p-6 space-y-4">
-                  <div className="h-6 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-12 bg-gray-200 rounded-xl"></div>
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded"></div>
+                  <div className="h-12 bg-gray-200 rounded-xl mt-6"></div>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Results */}
+        {/* Smooth Refreshing Indicator (no skeleton!) */}
+        {loading && !isInitialLoad && (
+          <div className="fixed top-4 right-4 z-50 pointer-events-none">
+            <div className="bg-white/95 backdrop-blur-md px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-gray-200">
+              <div className="w-5 h-5 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm font-medium text-gray-700">
+                Updating nearby hubs...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* No Results */}
         {!loading && vendorList.length === 0 && searchTerm && (
-          <div className="text-center py-16">
-            <div className="bg-gray-200 border-2 border-dashed rounded-xl w-32 h-32 mx-auto mb-6" />
-            <p className="text-xl font-medium text-gray-600">
+          <div className="text-center py-20">
+            <div className="bg-gray-100 border-2 border-dashed rounded-xl w-32 h-32 mx-auto mb-6"></div>
+            <p className="text-2xl font-semibold text-gray-700">
               No hubs found nearby
             </p>
-            <p className="text-gray-500 mt-2">
-              Try searching for common items like "oil", "rice", etc.
+            <p className="text-gray-500 mt-3">
+              Try searching for "rice", "oil", "dal", etc.
             </p>
           </div>
         )}
 
-        {!loading && vendorList.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {vendorList.map((vendor, i) => (
-              <VendorCard
-                key={`${vendor.LoginID}-${i}`}
-                name={vendor.hubName || "Unknown Hub"}
-                location={vendor.Location || "Location not available"}
-                distance={vendor.DistanceKm}
-                onRequest={() => handleVendorRequest(vendor)}
-                onLocation={() => handleOpenMap(vendor)}
-              />
-            ))}
-          </div>
-        )}
+        {/* Results with Smooth Animation */}
+        <AnimatePresence mode="wait">
+          {vendorList.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            >
+              {vendorList.map((vendor) => (
+                <motion.div
+                  key={`${vendor.LoginID}-${vendor.DistanceKm}`}
+                  layout
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <VendorCard
+                    name={vendor.hubName || "Unknown Hub"}
+                    location={vendor.Location || "Location not available"}
+                    distance={vendor.DistanceKm}
+                    onRequest={() => handleVendorRequest(vendor)}
+                    onLocation={() => handleOpenMap(vendor)}
+                  />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
