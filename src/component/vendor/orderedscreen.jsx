@@ -59,6 +59,7 @@ const AcceptedScreen = () => {
               Address: item.Address,
               SlotDatetime: item.SlotDatetime,
               Slot: item.Slot,
+              OrderDatetime: item.OrderDatetime,
               Status: item.Status,
               OTP: item.OTP || item.otp || item._doc?.OTP,
               items: [], // This will hold all items
@@ -73,6 +74,7 @@ const AcceptedScreen = () => {
             OrderType: item.OrderType,
             Price: parseFloat(item.Price) || 0,
             Quantity: parseInt(item.Quantity) || 0,
+            OrderDatetime: item.OrderDatetime,
           });
 
           // Accumulate totals
@@ -322,18 +324,39 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
         </div>
 
         {/* Scheduled Slot */}
+        {/* Scheduled Slot */}
         <div className="flex items-center justify-between pt-3 border-t border-gray-200 mb-6">
           <span className="text-gray-600 text-xs flex items-center gap-1">
             <Calendar size={14} className="text-orange-500" />
             Scheduled
           </span>
           <div className="text-right">
-            {order.Slot && (
-              <p className="text-xs text-gray-500 mt-0.5">{order.Slot}</p>
+            {order.Slot ? (
+              (() => {
+                // Extract time: "Fri 5 - 3:00 PM" → "3:00 PM"
+                const timePart = order.Slot.includes("-")
+                  ? order.Slot.split("-").pop().trim()
+                  : order.Slot.trim();
+
+                // Extract date from OrderDatetime (fallback if SlotDatetime missing)
+                let datePart = "";
+                if (order.SlotDatetime) {
+                  datePart = order.SlotDatetime.split("T")[0];
+                } else if (order.OrderDatetime) {
+                  datePart = order.OrderDatetime.split("T")[0];
+                }
+
+                return (
+                  <p className="text-xs text-gray-500 mt-0.5 font-medium">
+                    {datePart} - {timePart}
+                  </p>
+                );
+              })()
+            ) : (
+              <p className="text-xs text-gray-400">Not scheduled</p>
             )}
           </div>
         </div>
-
         {/* Action Buttons */}
         {order.Status === "Done" && (
           <div className="flex gap-3">

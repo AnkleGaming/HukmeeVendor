@@ -152,11 +152,25 @@ const Popupcard = ({ data, onClose }) => {
           <p>
             <strong>Address:</strong> {item.Address || "Not provided"}
           </p>
-          {item.Slot && (
+          {item.Slot && item.OrderDatetime ? (
             <p>
-              <strong>Slot:</strong> {item.Slot}
+              <strong>Slot:</strong>{" "}
+              {(() => {
+                // Extract "3:00 PM" from "Fri 5 - 3:00 PM"
+                const timePart = item.Slot.includes("-")
+                  ? item.Slot.split("-").pop().trim()
+                  : item.Slot.trim();
+
+                // Extract date from OrderDatetime (or fallback to SlotDatetime)
+                const datePart =
+                  (item.SlotDatetime || item.OrderDatetime || "").split(
+                    "T"
+                  )[0] || "";
+
+                return datePart ? `${datePart} - ${timePart}` : timePart;
+              })()}
             </p>
-          )}
+          ) : null}
           {item.Quantity && item.Quantity !== "1" && (
             <p>
               <strong>Quantity:</strong> {item.Quantity}
@@ -194,7 +208,7 @@ const Popupcard = ({ data, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 mb-15"
         onClick={(e) =>
           e.target === e.currentTarget && !loading && closePopup()
         }
