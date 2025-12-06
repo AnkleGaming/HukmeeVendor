@@ -334,26 +334,9 @@ const OrderCard = ({ order, index, onStart, onCancel }) => {
           </span>
           <div className="text-right">
             {order.Slot ? (
-              (() => {
-                // Extract time: "Fri 5 - 3:00 PM" → "3:00 PM"
-                const timePart = order.Slot.includes("-")
-                  ? order.Slot.split("-").pop().trim()
-                  : order.Slot.trim();
-
-                // Extract date from OrderDatetime (fallback if SlotDatetime missing)
-                let datePart = "";
-                if (order.SlotDatetime) {
-                  datePart = order.SlotDatetime.split("T")[0];
-                } else if (order.OrderDatetime) {
-                  datePart = order.OrderDatetime.split("T")[0];
-                }
-
-                return (
-                  <p className="text-xs text-gray-500 mt-0.5 font-medium">
-                    {datePart} - {timePart}
-                  </p>
-                );
-              })()
+              <p className="text-xs text-gray-500 mt-0.5 font-medium">
+                {order.Slot}
+              </p>
             ) : (
               <p className="text-xs text-gray-400">Not scheduled</p>
             )}

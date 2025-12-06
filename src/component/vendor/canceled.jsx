@@ -110,10 +110,10 @@ const CanceledOrderCard = ({ order, index }) => {
               {order.UserID}
             </p>
           </div>
-          <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 flex items-center gap-1">
+          {/* <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 flex items-center gap-1">
             <XCircle size={14} />
-            Canceled
-          </span>
+            Cancelled
+          </span> */}
         </div>
 
         {/* Details */}
@@ -161,7 +161,7 @@ const CanceledOrderCard = ({ order, index }) => {
         <div className="mt-5 pt-4 border-t border-gray-100">
           <div className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-2 rounded-full text-xs font-semibold text-center flex items-center justify-center gap-1.5">
             <AlertCircle size={16} />
-            Order Canceled
+            Order Cancelled
           </div>
         </div>
       </div>

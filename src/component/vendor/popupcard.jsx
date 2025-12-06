@@ -152,25 +152,11 @@ const Popupcard = ({ data, onClose }) => {
           <p>
             <strong>Address:</strong> {item.Address || "Not provided"}
           </p>
-          {item.Slot && item.OrderDatetime ? (
+          {item.Slot && (
             <p>
-              <strong>Slot:</strong>{" "}
-              {(() => {
-                // Extract "3:00 PM" from "Fri 5 - 3:00 PM"
-                const timePart = item.Slot.includes("-")
-                  ? item.Slot.split("-").pop().trim()
-                  : item.Slot.trim();
-
-                // Extract date from OrderDatetime (or fallback to SlotDatetime)
-                const datePart =
-                  (item.SlotDatetime || item.OrderDatetime || "").split(
-                    "T"
-                  )[0] || "";
-
-                return datePart ? `${datePart} - ${timePart}` : timePart;
-              })()}
+              <strong>Slot:</strong> {item.Slot}
             </p>
-          ) : null}
+          )}
           {item.Quantity && item.Quantity !== "1" && (
             <p>
               <strong>Quantity:</strong> {item.Quantity}
