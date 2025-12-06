@@ -27,14 +27,14 @@ const VendorCard = ({ name, location, distance, onRequest, onLocation }) => {
               className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold text-sm py-3 rounded-xl hover:shadow-lg transition-all"
             >
               <FiSend size={16} />
-              Request Sent
+              Send Request
             </button>
             <button
               onClick={onLocation}
               className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 font-semibold text-sm py-3 rounded-xl hover:bg-gray-200 transition-all"
             >
               <FiMapPin size={16} />
-              View Map
+              Map
             </button>
           </div>
         </CardContent>
@@ -155,7 +155,7 @@ const NearbyScreen = ({ onVendorSelect }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto mt-7">
         {/* Search Bar */}
         <div className="max-w-2xl mx-auto mb-10">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -227,7 +227,7 @@ const NearbyScreen = ({ onVendorSelect }) => {
               No hubs found nearby
             </p>
             <p className="text-gray-500 mt-3">
-              Try searching for "rice", "oil", "dal", etc.
+              Try searching for "Samsung", "Vivo", "Oppo", etc.
             </p>
           </div>
         )}
