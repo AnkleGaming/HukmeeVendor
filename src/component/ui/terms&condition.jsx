@@ -34,14 +34,6 @@ const TermsPage = () => {
     <div className="bg-gradient-to-b from-blue-50 to-gray-100 flex flex-col items-center justify-center p-2 sm:p-6">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-6 sm:p-10 transition-all duration-300 hover:shadow-2xl">
         {/* Header */}
-        <div className="relative text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-            Terms and Conditions
-          </h1>
-          <div
-            className={`mt-2 h-1 w-20 bg-${Colors.primaryMain} mx-auto rounded-full`}
-          ></div>
-        </div>
 
         {/* Loading State */}
         {loading && (
