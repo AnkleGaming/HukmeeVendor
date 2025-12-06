@@ -274,7 +274,7 @@ const UserProfile = () => {
           setPreview(null);
           if (fileInputRef.current) fileInputRef.current.value = "";
         }, 500);
-        // window.location.reload();
+        window.location.reload();
       } else {
         alert("❌ Failed to update image.");
       }

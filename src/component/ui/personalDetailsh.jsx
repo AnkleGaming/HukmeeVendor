@@ -60,7 +60,8 @@ const PersonalDetails = () => {
         editedDetails.email, // Correct key
         editedDetails.phoneNumber, // Correct key
         editedDetails.dob, // Correct key
-        editedDetails.Address // Correct key
+        editedDetails.Address, // Correct key
+        ""
       );
 
       if (res) {

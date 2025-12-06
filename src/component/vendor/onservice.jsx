@@ -306,7 +306,7 @@ const GroupedOrderCard = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-lg p-2 border"
+      className="bg-white rounded-2xl shadow-lg p-4 border"
     >
       <div className="flex justify-between items-start mb-3">
         <h3 className="font-bold text-lg">#{order.OrderID}</h3>

@@ -135,18 +135,6 @@ const RecordVideo = ({
   };
 
   // Toggle Flash
-  const toggleFlash = async () => {
-    if (!trackRef.current) return;
-    const newFlash = !flashOn;
-    setFlashOn(newFlash);
-    try {
-      await trackRef.current.applyConstraints({
-        advanced: [{ torch: newFlash }],
-      });
-    } catch (e) {
-      alert("Flash not supported on this device.");
-    }
-  };
 
   // Convert Blob to Base64 with progress simulation
   const blobToBase64 = (blob) => {
@@ -274,8 +262,9 @@ const RecordVideo = ({
           </div>
 
           {/* Video Preview */}
+
           <div className="relative rounded-2xl overflow-hidden bg-black/50 backdrop-blur-sm shadow-inner">
-            {!videoURL ? (
+            {!videoURL && (
               <video
                 ref={videoRef}
                 autoPlay
@@ -283,15 +272,8 @@ const RecordVideo = ({
                 playsInline
                 className="w-full h-64 object-cover"
               />
-            ) : (
-              <video
-                src={videoURL}
-                controls
-                className="w-full h-64 object-cover rounded-2xl"
-              />
             )}
 
-            {/* Recording Indicator */}
             {isRecording && (
               <div className="absolute top-3 left-3 flex items-center gap-2 bg-red-600/90 text-white px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm">
                 <motion.div
@@ -321,7 +303,7 @@ const RecordVideo = ({
                 >
                   <FlipHorizontal2 size={20} />
                 </button>
-                <button
+                {/* <button
                   onClick={toggleFlash}
                   className={`p-3 rounded-full backdrop-blur-sm transition ${
                     flashOn
@@ -331,7 +313,7 @@ const RecordVideo = ({
                   title="Toggle Flash"
                 >
                   {flashOn ? <Zap size={20} /> : <ZapOff size={20} />}
-                </button>
+                </button> */}
               </div>
             )}
 
