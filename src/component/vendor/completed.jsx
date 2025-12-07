@@ -5,36 +5,69 @@ import COLORS from "../core/constant";
 import {
   CheckCircle,
   Package,
-  Clock,
   User,
   IndianRupee,
   ShoppingBag,
   Calendar,
+  Tag,
 } from "lucide-react";
 
 const CompletedScreen = () => {
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [groupedOrders, setGroupedOrders] = useState([]); // { OrderID, items[], FinalPrice, Coupon, CompletedAt, ... }
+  const [isLoading, setIsLoading] = useState(true);
   const UserID = localStorage.getItem("userPhone");
 
-  // Prevent body scroll if needed (not used here, but kept for consistency)
-  useEffect(() => {
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, []);
-
-  // Fetch completed orders
   useEffect(() => {
     const fetchOrders = async () => {
-      if (!UserID) return;
+      if (!UserID) {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       try {
         const data = await GetOrders("", UserID, "Completed");
-        setOrders(data || []);
+
+        const grouped = data.reduce((acc, order) => {
+          const key = order.OrderID;
+          if (!acc[key]) {
+            acc[key] = {
+              OrderID: order.OrderID,
+              UserID: order.UserID,
+              PaymentMethod: order.PaymentMethod,
+              OrderDatetime: order.OrderDatetime,
+              CompletedAt: order.CompletedAt,
+              FinalPrice: order.FinalPrice,
+              Coupon: order.Coupon,
+              items: [],
+              originalTotal: 0, // We'll calculate this
+            };
+          }
+
+          const itemTotal =
+            parseFloat(order.Price) * parseInt(order.Quantity || 1);
+          acc[key].originalTotal += itemTotal;
+
+          acc[key].items.push({
+            ItemName: order.ItemName,
+            Quantity: order.Quantity,
+            Price: order.Price,
+            ItemImages: order.ItemImages,
+          });
+
+          return acc;
+        }, {});
+
+        const groupedArray = Object.values(grouped)
+          .map((group) => ({
+            ...group,
+            originalTotal: Math.round(group.originalTotal), // Clean number
+          }))
+          .sort((a, b) => new Date(b.CompletedAt) - new Date(a.CompletedAt));
+
+        setGroupedOrders(groupedArray);
       } catch (error) {
         console.error("Error fetching completed orders:", error);
-        setOrders([]);
+        setGroupedOrders([]);
       } finally {
         setIsLoading(false);
       }
@@ -42,6 +75,17 @@ const CompletedScreen = () => {
 
     fetchOrders();
   }, [UserID]);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <div className={`${COLORS.bgGray} min-h-screen py-6 px-4`}>
@@ -56,16 +100,17 @@ const CompletedScreen = () => {
 
         {isLoading ? (
           <LoadingSkeleton />
-        ) : orders.length === 0 ? (
+        ) : groupedOrders.length === 0 ? (
           <EmptyState />
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence>
-              {orders.map((order, index) => (
-                <CompletedOrderCard
-                  key={order.OrderID}
-                  order={order}
+              {groupedOrders.map((group, index) => (
+                <GroupedOrderCard
+                  key={group.OrderID}
+                  group={group}
                   index={index}
+                  formatDate={formatDate}
                 />
               ))}
             </AnimatePresence>
@@ -77,25 +122,19 @@ const CompletedScreen = () => {
 };
 
 // ==========================
-// Completed Order Card
+// Grouped Order Card (Multiple items in one order)
 // ==========================
-const CompletedOrderCard = ({ order, index }) => {
+const GroupedOrderCard = ({ group, index, formatDate }) => {
   const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, y: -20 },
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  const totalItems = group.items.reduce(
+    (sum, item) => sum + parseInt(item.Quantity || 1),
+    0
+  );
 
   return (
     <motion.div
@@ -103,79 +142,102 @@ const CompletedOrderCard = ({ order, index }) => {
       initial="hidden"
       animate="visible"
       exit="exit"
-      transition={{ delay: index * 0.1, duration: 0.4 }}
-      className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden"
     >
       <div className="p-5">
-        {/* Header: Order ID + Status */}
+        {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="font-bold text-l text-gray-800 flex items-center gap-2">
-              <Package size={18} />#{order.OrderID}
+            <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+              <Package size={20} />#{group.OrderID}
             </h3>
             <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
               <User size={14} />
-              {order.UserID}
+              {group.UserID}
             </p>
           </div>
-          {/* <span className="px-3 py-1 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1">
-            <CheckCircle size={14} />
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
+            <CheckCircle size={15} />
             Completed
-          </span> */}
-        </div>
-
-        {/* Order Details */}
-        <div className="space-y-3 text-sm border-t border-gray-100 pt-3">
-          <div className="flex justify-between">
-            <span className="text-gray-600 flex items-center gap-1">
-              <ShoppingBag size={14} />
-              Service
-            </span>
-            <span className="font-medium text-gray-800">{order.ItemName}</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span className="text-gray-600">Type</span>
-            <span className="font-medium capitalize">{order.OrderType}</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span className="text-gray-600 flex items-center gap-1">
-              <IndianRupee size={14} />
-              Price
-            </span>
-            <span className="font-semibold text-emerald-600">
-              ₹{order.Price}
-            </span>
-          </div>
-
-          <div className="flex justify-between">
-            <span className="text-gray-600">Quantity</span>
-            <span className="font-medium">{order.Quantity}</span>
-          </div>
-
-          <div className="flex justify-between">
-            <span className="text-gray-600">Payment Mode</span>
-            <span className="font-medium">{order.PaymentMethod}</span>
           </div>
         </div>
 
-        {/* Completion Time */}
-        {order.CompletedAt && (
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <p className="text-xs text-gray-500 flex items-center gap-1">
-              <Calendar size={14} />
-              Completed on {formatDate(order.CompletedAt)}
-            </p>
+        {/* Items List */}
+        <div className="space-y-3 mb-4 border-t border-gray-100 pt-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600 flex items-center gap-2">
+              <ShoppingBag size={15} />
+              Items ({totalItems})
+            </span>
           </div>
-        )}
 
-        {/* Success Badge */}
-        <div className="mt-4 flex justify-center">
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5">
-            <CheckCircle size={16} />
-            Completed
+          {group.items.map((item, idx) => (
+            <div
+              key={idx}
+              className="flex items-center justify-between text-sm bg-gray-50 rounded-lg p-3"
+            >
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="font-medium text-gray-800">{item.ItemName}</p>
+                  <p className="text-xs text-gray-500">Qty: {item.Quantity}</p>
+                </div>
+              </div>
+              <span className="text-gray-600">₹{item.Price}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Coupon & Final Price */}
+        {/* Coupon & Pricing Section */}
+        <div className="space-y-3 text-sm border-t border-dashed border-gray-200 pt-4">
+          {/* Original Total */}
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Original Amount</span>
+            <span className="text-gray-500 line-through">
+              ₹{group.originalTotal}
+            </span>
           </div>
+
+          {/* Coupon Applied */}
+          {group.Coupon && (
+            <div className="flex justify-between items-center text-emerald-600">
+              <span className="flex items-center gap-1">
+                <Tag size={14} />
+                Coupon Applied
+              </span>
+              <span className="font-medium">- {group.Coupon}</span>
+            </div>
+          )}
+
+          {/* Savings Highlight (Optional but awesome UX) */}
+          {group.Coupon && group.originalTotal > group.FinalPrice && (
+            <div className="flex justify-between items-center text-emerald-600 font-bold">
+              <span>You Saved</span>
+              <span>₹{group.originalTotal - group.FinalPrice}</span>
+            </div>
+          )}
+
+          {/* Final Amount */}
+          <div className="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-300">
+            <span className="text-gray-800 flex items-center gap-1">
+              <IndianRupee size={18} />
+              Final Amount
+            </span>
+            <span className="bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
+              ₹{group.FinalPrice || "0"}
+            </span>
+          </div>
+        </div>
+
+        {/* Payment & Completion Time */}
+        <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-500 space-y-1">
+          <p>
+            Paid via:{" "}
+            <span className="font-medium text-gray-700">
+              {group.PaymentMethod}
+            </span>
+          </p>
         </div>
       </div>
     </motion.div>
@@ -190,23 +252,16 @@ const LoadingSkeleton = () => (
     {[1, 2, 3].map((i) => (
       <div
         key={i}
-        className="bg-white rounded-2xl shadow-lg p-5 animate-pulse border border-gray-100"
+        className="bg-white rounded-2xl shadow-lg p-6 animate-pulse border border-gray-100"
       >
         <div className="flex justify-between mb-4">
-          <div>
-            <div className="h-6 bg-gray-200 rounded w-32 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-24"></div>
-          </div>
-          <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+          <div className="h-7 bg-gray-200 rounded w-32"></div>
+          <div className="h-7 bg-gray-200 rounded-full w-24"></div>
         </div>
-        <div className="space-y-3 pt-3 border-t">
-          <div className="h-4 bg-gray-200 rounded"></div>
-          <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-          <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-          <div className="h-4 bg-gray-200 rounded w-3/6"></div>
-        </div>
-        <div className="mt-4 pt-3 border-t">
-          <div className="h-3 bg-gray-200 rounded w-40 mx-auto"></div>
+        <div className="space-y-4">
+          <div className="h-16 bg-gray-100 rounded-lg"></div>
+          <div className="h-16 bg-gray-100 rounded-lg"></div>
+          <div className="h-10 bg-gray-200 rounded mt-4"></div>
         </div>
       </div>
     ))}
@@ -220,16 +275,17 @@ const EmptyState = () => (
   <motion.div
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
-    className="text-center py-16"
+    className="text-center py-20"
   >
     <div className="bg-gray-100 w-32 h-32 rounded-full mx-auto mb-6 flex items-center justify-center">
-      <CheckCircle size={48} className="text-gray-400" />
+      <CheckCircle size={60} className="text-gray-400" />
     </div>
-    <h3 className="text-xl font-semibold text-gray-700 mb-2">
-      No Completed Orders
+    <h3 className="text-2xl font-bold text-gray-700 mb-3">
+      No Completed Orders Yet
     </h3>
     <p className="text-gray-500 max-w-md mx-auto">
-      Once you finish and mark orders as completed, they will appear here.
+      Your completed orders will appear here once services are finished and
+      marked as complete.
     </p>
   </motion.div>
 );
