@@ -42,7 +42,15 @@ const RecordVideo = ({
 
   // Initialize camera
   useEffect(() => {
+    // Only start camera when there is NO recorded video
+    if (videoURL) return;
+
     const initCamera = async () => {
+      // Stop old stream if exists
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode },
@@ -53,20 +61,19 @@ const RecordVideo = ({
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
         }
 
-        // Flash support (limited in browsers)
-        if (trackRef.current && trackRef.current.applyConstraints) {
+        // Flash
+        if (trackRef.current?.applyConstraints) {
           try {
             await trackRef.current.applyConstraints({
               advanced: [{ torch: flashOn }],
             });
-          } catch (e) {
-            console.warn("Flash not supported");
-          }
+          } catch (e) {}
         }
       } catch (err) {
-        alert("Camera access denied or not available!");
+        alert("Camera access denied!");
         console.error(err);
       }
     };
@@ -75,11 +82,11 @@ const RecordVideo = ({
 
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+        streamRef.current.getTracks().forEach((t) => t.stop());
       }
       clearInterval(timerRef.current);
     };
-  }, [facingMode, flashOn]);
+  }, [facingMode, flashOn, videoURL]); // ← This line is the key!
 
   // Start Recording
   const handleStartRecording = () => {
@@ -121,29 +128,25 @@ const RecordVideo = ({
   };
 
   // Reset
-  const handleReset = () => {
-    // Stop recording if active
-    if (isRecording) {
-      handleStopRecording();
-    }
-
-    // Free memory
+  // REPLACE your old handleReset with this
+  const handleRetake = () => {
+    // Clean old video from memory
     if (videoURL) {
       URL.revokeObjectURL(videoURL);
     }
 
-    // Reset state
+    // Reset all states
     setVideoURL(null);
     setChunks([]);
     setRecordingTime(0);
     setUploadProgress(0);
+    setIsRecording(false);
 
-    // Most Important: Show live camera again
+    // Optional: Force video element to show live stream again
     if (videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
     }
   };
-
   // Flip Camera
   const flipCamera = () => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
@@ -361,7 +364,7 @@ const RecordVideo = ({
                 <>
                   <motion.button
                     whileTap={{ scale: 0.95 }}
-                    onClick={handleReset}
+                    onClick={handleRetake} // ← Just change this line
                     className="bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-full font-medium flex items-center gap-2 backdrop-blur-sm transition"
                   >
                     <RotateCcw size={18} />
