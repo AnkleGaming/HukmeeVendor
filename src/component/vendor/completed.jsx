@@ -157,10 +157,6 @@ const GroupedOrderCard = ({ group, index, formatDate }) => {
               {group.UserID}
             </p>
           </div>
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1">
-            <CheckCircle size={15} />
-            Completed
-          </div>
         </div>
 
         {/* Items List */}

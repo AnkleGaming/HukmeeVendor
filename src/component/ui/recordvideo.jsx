@@ -122,10 +122,26 @@ const RecordVideo = ({
 
   // Reset
   const handleReset = () => {
+    // Stop recording if active
+    if (isRecording) {
+      handleStopRecording();
+    }
+
+    // Free memory
+    if (videoURL) {
+      URL.revokeObjectURL(videoURL);
+    }
+
+    // Reset state
     setVideoURL(null);
     setChunks([]);
     setRecordingTime(0);
     setUploadProgress(0);
+
+    // Most Important: Show live camera again
+    if (videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
   };
 
   // Flip Camera
