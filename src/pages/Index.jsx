@@ -4,7 +4,6 @@ import Footer from "../component/Footer";
 import MyOrder from "../component/vendor/orderedscreen";
 import TabBar from "../component/vendor/tab";
 import AcceptedScreen from "../component/vendor/orderedscreen";
-import PendingScreen from "../component/vendor/pendingscreen";
 import DeclinedScreen from "../component/vendor/declinedscreen";
 import COLORS from "../component/core/constant";
 import LoginCard from "../component/ui/loginCard.jsx";
@@ -17,6 +16,7 @@ import ShowLeads from "../backend/order/showleads.js";
 import OnService from "../component/vendor/onservice.jsx";
 import CompletedScreen from "../component/vendor/completed.jsx";
 import CanceledScreen from "../component/vendor/canceled.jsx";
+import PendingScreen from "../component/vendor/pending.jsx";
 
 // Hook to track window size
 const useWindowSize = () => {
@@ -65,6 +65,9 @@ const Index = () => {
 
       case "Cancelled": // UPDATED ✔️
         return <CanceledScreen />;
+
+      case "Pending": // UPDATED ✔️
+        return <PendingScreen />;
 
       default:
         return null;

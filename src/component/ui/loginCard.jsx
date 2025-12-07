@@ -27,7 +27,7 @@ const LoginCard = ({ onClose, onSubmit }) => {
   const [loading, setLoading] = useState(false);
   const isValid = phoneNumber.length === 10;
   const { width } = useWindowSize();
-  const isMobile = width < 640; // Tailwind 'sm' breakpoint
+  const isMobile = width < 640;
   const modalRef = useRef(null);
   const navigate = useNavigate();
 

@@ -153,6 +153,11 @@ const CompletedOrderCard = ({ order, index }) => {
             <span className="text-gray-600">Quantity</span>
             <span className="font-medium">{order.Quantity}</span>
           </div>
+
+          <div className="flex justify-between">
+            <span className="text-gray-600">Payment Mode</span>
+            <span className="font-medium">{order.PaymentMethod}</span>
+          </div>
         </div>
 
         {/* Completion Time */}

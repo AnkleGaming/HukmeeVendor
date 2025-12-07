@@ -3,36 +3,44 @@ import { motion, AnimatePresence } from "framer-motion";
 import GetOrders from "../../backend/order/getorders";
 import COLORS from "../core/constant";
 import {
-  XCircle,
+  CheckCircle,
   Package,
-  User,
-  ShoppingBag,
-  IndianRupee,
   Clock,
-  AlertCircle,
+  User,
+  IndianRupee,
+  ShoppingBag,
+  Calendar,
 } from "lucide-react";
 
-const CanceledScreen = () => {
+const PendingScreen = () => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const UserID = localStorage.getItem("userPhone");
 
+  // Prevent body scroll if needed (not used here, but kept for consistency)
   useEffect(() => {
-    const fetchCanceledOrders = async () => {
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
+  // Fetch completed orders
+  useEffect(() => {
+    const fetchOrders = async () => {
       if (!UserID) return;
       setIsLoading(true);
       try {
-        const data = await GetOrders("", UserID, "Cancelled");
+        const data = await GetOrders("", UserID, "Pending1");
         setOrders(data || []);
       } catch (error) {
-        console.error("Error fetching canceled orders:", error);
+        console.error("Error fetching pending orders:", error);
         setOrders([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCanceledOrders();
+    fetchOrders();
   }, [UserID]);
 
   return (
@@ -43,7 +51,7 @@ const CanceledScreen = () => {
           animate={{ opacity: 1, y: 0 }}
           className={`text-3xl md:text-4xl font-bold bg-gradient-to-r ${COLORS.gradientFrom} ${COLORS.gradientTo} bg-clip-text text-transparent mb-8 text-center`}
         >
-          Canceled Orders
+          Pending Orders
         </motion.h1>
 
         {isLoading ? (
@@ -54,7 +62,7 @@ const CanceledScreen = () => {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence>
               {orders.map((order, index) => (
-                <CanceledOrderCard
+                <CompletedOrderCard
                   key={order.OrderID}
                   order={order}
                   index={index}
@@ -69,9 +77,9 @@ const CanceledScreen = () => {
 };
 
 // ==========================
-// Canceled Order Card
+// Completed Order Card
 // ==========================
-const CanceledOrderCard = ({ order, index }) => {
+const CompletedOrderCard = ({ order, index }) => {
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
@@ -79,8 +87,8 @@ const CanceledOrderCard = ({ order, index }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString("en-IN", {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-IN", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -99,10 +107,10 @@ const CanceledOrderCard = ({ order, index }) => {
       className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden"
     >
       <div className="p-5">
-        {/* Header */}
+        {/* Header: Order ID + Status */}
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+            <h3 className="font-bold text-l text-gray-800 flex items-center gap-2">
               <Package size={18} />#{order.OrderID}
             </h3>
             <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
@@ -110,14 +118,14 @@ const CanceledOrderCard = ({ order, index }) => {
               {order.UserID}
             </p>
           </div>
-          {/* <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 flex items-center gap-1">
-            <XCircle size={14} />
-            Cancelled
+          {/* <span className="px-3 py-1 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700 flex items-center gap-1">
+            <CheckCircle size={14} />
+            Completed
           </span> */}
         </div>
 
-        {/* Details */}
-        <div className="space-y-3 text-sm">
+        {/* Order Details */}
+        <div className="space-y-3 text-sm border-t border-gray-100 pt-3">
           <div className="flex justify-between">
             <span className="text-gray-600 flex items-center gap-1">
               <ShoppingBag size={14} />
@@ -136,32 +144,32 @@ const CanceledOrderCard = ({ order, index }) => {
               <IndianRupee size={14} />
               Price
             </span>
-            <span className="font-semibold text-red-600">₹{order.Price}</span>
+            <span className="font-semibold text-emerald-600">
+              ₹{order.Price}
+            </span>
           </div>
 
           <div className="flex justify-between">
             <span className="text-gray-600">Quantity</span>
             <span className="font-medium">{order.Quantity}</span>
           </div>
-
-          {order.OrderDatetime && (
-            <div className="flex justify-between">
-              <span className="text-gray-600 flex items-center gap-1">
-                <Clock size={14} />
-                Canceled On
-              </span>
-              <span className="font-medium text-xs text-gray-700">
-                {formatDate(order.OrderDatetime)}
-              </span>
-            </div>
-          )}
         </div>
 
-        {/* Footer Badge */}
-        <div className="mt-5 pt-4 border-t border-gray-100">
-          <div className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-2 rounded-full text-xs font-semibold text-center flex items-center justify-center gap-1.5">
-            <AlertCircle size={16} />
-            Order Cancelled
+        {/* Completion Time */}
+        {order.CompletedAt && (
+          <div className="mt-4 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-500 flex items-center gap-1">
+              <Calendar size={14} />
+              Completed on {formatDate(order.CompletedAt)}
+            </p>
+          </div>
+        )}
+
+        {/* Success Badge */}
+        <div className="mt-4 flex justify-center">
+          <div className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5">
+            <CheckCircle size={16} />
+            Pending
           </div>
         </div>
       </div>
@@ -186,14 +194,14 @@ const LoadingSkeleton = () => (
           </div>
           <div className="h-6 bg-gray-200 rounded-full w-20"></div>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3 pt-3 border-t">
           <div className="h-4 bg-gray-200 rounded"></div>
           <div className="h-4 bg-gray-200 rounded w-5/6"></div>
           <div className="h-4 bg-gray-200 rounded w-4/6"></div>
           <div className="h-4 bg-gray-200 rounded w-3/6"></div>
         </div>
         <div className="mt-4 pt-3 border-t">
-          <div className="h-8 bg-gray-200 rounded-full"></div>
+          <div className="h-3 bg-gray-200 rounded w-40 mx-auto"></div>
         </div>
       </div>
     ))}
@@ -210,15 +218,15 @@ const EmptyState = () => (
     className="text-center py-16"
   >
     <div className="bg-gray-100 w-32 h-32 rounded-full mx-auto mb-6 flex items-center justify-center">
-      <XCircle size={48} className="text-gray-400" />
+      <CheckCircle size={48} className="text-gray-400" />
     </div>
     <h3 className="text-xl font-semibold text-gray-700 mb-2">
-      No Cancelled Orders
+      No Completed Orders
     </h3>
     <p className="text-gray-500 max-w-md mx-auto">
-      Orders you cancel will appear here for your reference.
+      Once you finish and mark orders as completed, they will appear here.
     </p>
   </motion.div>
 );
 
-export default CanceledScreen;
+export default PendingScreen;

@@ -416,6 +416,15 @@ const GroupedOrderCard = ({
         )}
 
         {hasBefore && !hasPayment && (
+          <button
+            onClick={() => onUpdateItem(order.OrderID)}
+            className="bg-gradient-to-r from-orange-500 to-gray-600 text-white py-2.5 rounded-xl font-medium text-sm hover:shadow-md transition flex items-center justify-center gap-2 hover:cursor-pointer"
+          >
+            Update items
+          </button>
+        )}
+
+        {/* {hasBefore && !hasPayment && (
           <>
             <div className="flex flex-row justify-between">
               <button
@@ -433,7 +442,7 @@ const GroupedOrderCard = ({
               </button>
             </div>
           </>
-        )}
+        )} */}
 
         {hasBefore && hasPayment && !hasAfter && (
           <button
@@ -526,6 +535,7 @@ const VideoRecordModal = ({
 // ==========================
 // Payment Confirmation Modal
 // ==========================
+
 const PaymentModal = ({ isOpen, onClose, orderId, amount, onConfirm }) => {
   return (
     <AnimatePresence>
