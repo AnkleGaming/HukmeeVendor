@@ -20,7 +20,13 @@ class GetOrderModel {
     BeforVideo,
     AfterVideo,
     OTP,
-    PaymentMethod
+    PaymentMethod,
+    lat,
+    lon,
+    AcptVendor,
+    PayCustomer,
+    Coupon,
+    FinalPrice
   ) {
     this.ID = ID;
     this.OrderID = OrderID;
@@ -40,6 +46,12 @@ class GetOrderModel {
     this.AfterVideo = AfterVideo;
     this.OTP = OTP;
     this.PaymentMethod = PaymentMethod;
+    this.lat = lat;
+    this.lon = lon;
+    this.AcptVendor = AcptVendor;
+    this.PayCustomer = PayCustomer;
+    this.Coupon = Coupon;
+    this.FinalPrice = FinalPrice;
   }
 
   static fromJson(json) {
@@ -68,7 +80,13 @@ class GetOrderModel {
       json.BeforVideo || "",
       json.AfterVideo || "",
       json.OTP || "",
-      json.PaymentMethod || ""
+      json.PaymentMethod || "",
+      json.lat || "",
+      json.lon || "",
+      json.AcptVendor || "",
+      json.PayCustomer || "",
+      json.Coupon || "",
+      json.FinalPrice || ""
     );
   }
 }

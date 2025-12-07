@@ -72,6 +72,9 @@ const OnService = () => {
               AfterVideo: order.AfterVideo || "",
               PaymentMethod: order.PaymentMethod || "",
               OTP: order.OTP || "",
+              PayCustomer: order.PayCustomer || "", // ADD THIS LINE
+              Coupon: order.Coupon || "",
+              FinalPrice: order.FinalPrice || 0,
             };
           }
 
@@ -301,6 +304,7 @@ const GroupedOrderCard = ({
   const hasBefore = !!order.BeforVideo || uploadedBefore[order.OrderID];
   const hasPayment = !!order.PaymentMethod;
   const hasAfter = !!order.AfterVideo || uploadedAfter[order.OrderID];
+  const hasCustomerPaid = ["Cash", "Online"].includes(order.PayCustomer);
 
   return (
     <motion.div
@@ -404,60 +408,60 @@ const GroupedOrderCard = ({
       </div>
 
       {/* Buttons */}
-      <div className="grid grid-cols-1 gap-2">
+      <div className="grid grid-cols-1 gap-3">
+        {/* 1. Record Before Video */}
         {!hasBefore && (
           <button
             onClick={() => onVideoClick(order, "Before")}
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-2.5 rounded-xl font-medium text-sm hover:shadow-md transition flex items-center justify-center gap-2"
+            className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:shadow-lg transition"
           >
-            <Camera size={16} />
+            <Camera size={18} />
             Record Before Video
           </button>
         )}
 
-        {hasBefore && !hasPayment && (
-          <button
-            onClick={() => onUpdateItem(order.OrderID)}
-            className="bg-gradient-to-r from-orange-500 to-gray-600 text-white py-2.5 rounded-xl font-medium text-sm hover:shadow-md transition flex items-center justify-center gap-2 hover:cursor-pointer"
-          >
-            Update items
-          </button>
+        {/* 2. After Before Video → Show Update + Payment if customer paid */}
+        {hasBefore && !hasCustomerPaid && (
+          <>
+            {/* Show Update Items button */}
+            <button
+              onClick={() => onUpdateItem(order.OrderID)}
+              className="bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:shadow-lg transition"
+            >
+              <Package size={18} />
+              Update Items
+            </button>
+          </>
         )}
 
-        {/* {hasBefore && !hasPayment && (
+        {hasBefore && hasCustomerPaid && !hasPayment && (
           <>
-            <div className="flex flex-row justify-between">
-              <button
-                onClick={() => onUpdateItem(order.OrderID)}
-                className="bg-gradient-to-r from-orange-500 to-gray-600 text-white p-2.5 rounded-xl font-medium text-[10px] hover:shadow-md transition flex items-center justify-center gap-2 hover:cursor-pointer"
-              >
-                Update items
-              </button>
-              <button
-                onClick={() => onPayment(order.OrderID, order.totalPrice)}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-2.5 rounded-xl font-medium text-[10px] hover:shadow-md transition flex items-center justify-center gap-2 hover:cursor-pointer"
-              >
-                <IndianRupee size={16} />
-                Confirm Payment
-              </button>
-            </div>
+            <button
+              onClick={() => onPayment(order.OrderID, order.FinalPrice)}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:shadow-lg transition"
+            >
+              <IndianRupee size={18} />
+              Confirm Payment Received
+            </button>
           </>
-        )} */}
+        )}
 
+        {/* 3. After Payment → Record After Video */}
         {hasBefore && hasPayment && !hasAfter && (
           <button
             onClick={() => onVideoClick(order, "After")}
-            className="bg-gradient-to-r from-purple-500 to-pink-600 text-white py-2.5 rounded-xl font-medium text-sm hover:shadow-md transition flex items-center justify-center gap-2"
+            className="bg-gradient-to-r from-purple-500 to-pink-600 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 hover:shadow-lg transition"
           >
-            <Video size={16} />
+            <Video size={18} />
             Record After Video
           </button>
         )}
 
+        {/* 4. Service Complete */}
         {hasAfter && (
-          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-2.5 rounded-xl font-medium text-sm text-center flex items-center justify-center gap-2">
-            <CheckCircle size={16} />
-            Service Complete
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-bold text-center flex items-center justify-center gap-2">
+            <CheckCircle size={20} />
+            Service Completed Successfully
           </div>
         )}
       </div>

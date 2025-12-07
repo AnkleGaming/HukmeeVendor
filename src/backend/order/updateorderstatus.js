@@ -1,37 +1,44 @@
 import axios from "axios";
 
-const UpdateOrders = async ({
+const UpdateOrder = async ({
   OrderID,
   Price,
   Quantity,
   Address = "",
   Slot = "",
-  Status,
-  VendorPhone,
+  Status = "",
+  VendorPhone = "",
   BeforVideo = "",
   AfterVideo = "",
   OTP = "",
   PaymentMethod = "",
+  AcptVendor = "",
+  PayCustomer = "",
+  Coupon = "",
+  FinalPrice = "",
 }) => {
-  // Prepare parameters in x-www-form-urlencoded format
-  const params = new URLSearchParams();
-  params.append("token", "SWNCMPMSREMXAMCKALVAALI");
-  params.append("OrderID", OrderID);
-  params.append("Price", Price);
-  params.append("Quantity", Quantity);
-  params.append("Address", Address);
-  params.append("Slot", Slot);
-  params.append("Status", Status);
-  params.append("VendorPhone", VendorPhone);
-  params.append("BeforVideo", BeforVideo);
-  params.append("AfterVideo", AfterVideo);
-  params.append("OTP", OTP);
-  params.append("PaymentMethod", PaymentMethod);
+  const formData = new URLSearchParams();
+  formData.append("token", "SWNCMPMSREMXAMCKALVAALI");
+  formData.append("OrderID", OrderID);
+  formData.append("Price", Price);
+  formData.append("Quantity", Quantity);
+  formData.append("Address", Address);
+  formData.append("Slot", Slot);
+  formData.append("Status", Status);
+  formData.append("VendorPhone", VendorPhone);
+  formData.append("BeforVideo", BeforVideo);
+  formData.append("AfterVideo", AfterVideo);
+  formData.append("OTP", OTP);
+  formData.append("PaymentMethod", PaymentMethod);
+  formData.append("AcptVendor", AcptVendor);
+  formData.append("PayCustomer", PayCustomer);
+  formData.append("Coupon", Coupon);
+  formData.append("FinalPrice", FinalPrice);
 
   try {
     const response = await axios.post(
       "https://api.hukmee.in/APIs/APIs.asmx/UpdateOrders",
-      params,
+      formData.toString(),
       {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -39,26 +46,15 @@ const UpdateOrders = async ({
       }
     );
 
-    // .asmx may return JSON inside text
-    let data = response.data;
-    if (typeof data === "string") {
-      try {
-        data = JSON.parse(data);
-      } catch {
-        data = { message: data };
-      }
-    }
-
-    console.log("✅ UpdateOrders response:", data);
-    return data?.message || "Unknown response";
+    return response.data;
   } catch (error) {
-    console.error("❌ UpdateOrders Error:", {
+    console.error("UpdateOrder Error:", {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data,
     });
-    return "Failed to update order.";
+    return null;
   }
 };
 
-export default UpdateOrders;
+export default UpdateOrder;
