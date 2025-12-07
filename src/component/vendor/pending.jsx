@@ -221,10 +221,10 @@ const EmptyState = () => (
       <CheckCircle size={48} className="text-gray-400" />
     </div>
     <h3 className="text-xl font-semibold text-gray-700 mb-2">
-      No Completed Orders
+      No Pending Orders
     </h3>
     <p className="text-gray-500 max-w-md mx-auto">
-      Once you finish and mark orders as completed, they will appear here.
+      Once you mark orders as pending, they will appear here.
     </p>
   </motion.div>
 );
