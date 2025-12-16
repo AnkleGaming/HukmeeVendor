@@ -180,9 +180,7 @@ const Popupcard = ({ data, onClose }) => {
           {loading ? "Accepting..." : "Accept Order"}
         </button>
         <button
-          onClick={() => {
-            console.log(" clicked");
-          }}
+          onClick={handleDecline}
           disabled={loading}
           className={`flex-1 py-3 rounded-lg font-bold border ${colors.borderGray} text-gray-700 hover:bg-gray-100 transition-all`}
         >
