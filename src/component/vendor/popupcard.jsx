@@ -167,9 +167,7 @@ const Popupcard = ({ data, onClose }) => {
 
       <div className="flex gap-3">
         <button
-          onClick={() => {
-            console.log("Accept clicked");
-          }}
+          onClick={handleAccept}
           disabled={loading}
           className={`flex-1 py-3 rounded-lg font-bold text-white bg-gradient-to-r ${
             colors.primaryFrom
